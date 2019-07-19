@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "A geographic guessing game in Vermont",
   "dependencies": {
+    "@mapbox/leaflet-pip": "^1.1.0",
+    "leaflet": "^1.5.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1"
@@ -20,7 +22,7 @@
   "license": "MIT",
   "homepage": "https://github.com/BurlingtonCodeAcademy/geo-vermonter#readme",
   "devDependencies": {
-    "cypress": "^3.0.2"
+    "cypress": "^3.4.0"
   },
   "browserslist": {
     "production": [

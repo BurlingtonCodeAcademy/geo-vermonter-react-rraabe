@@ -1,0 +1,28 @@
+#navbar {
+  width: 100%;
+  border: 1px solid red;
+  color: red;
+}
+
+* {
+  border: 1px solid red;
+}
+
+.vertical-flex-box {
+  display: flex;
+  flex-direction: column;
+}
+
+#county-map{
+  
+}
+
+.horizontal-flex-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.nav-button {
+  background: none;
+}
