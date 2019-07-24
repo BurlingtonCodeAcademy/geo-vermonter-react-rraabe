@@ -1,11 +1,7 @@
 #navbar {
   width: 100%;
-  border: 1px solid red;
-  color: red;
-}
-
-* {
-  border: 1px solid red;
+  font-size: 5vh;
+  text-align: center;
 }
 
 .vertical-flex-box {
@@ -13,9 +9,6 @@
   flex-direction: column;
 }
 
-#county-map{
-  
-}
 
 .horizontal-flex-box {
   display: flex;
@@ -25,4 +18,31 @@
 
 .nav-button {
   background: none;
+  border: none;
 }
+
+#button-wrapper{
+  display: grid;
+  grid-template-areas: 
+            ". north ."
+            "west . east"
+             ". south .";
+}
+
+#north-button{
+  grid-area: north;
+  width: 50%;
+}
+#south-button{
+  grid-area: south;
+  width: 50%;
+}
+#east-button{
+  grid-area: east;
+  width: 50%;
+}
+#west-button{
+  grid-area: west;
+  width: 50%;
+}
+
