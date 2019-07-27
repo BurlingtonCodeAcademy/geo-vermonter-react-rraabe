@@ -11,7 +11,6 @@ import { ReactComponent as DownArrow } from "./assets/arrow-down.svg";
 import { ReactComponent as LeftArrow } from "./assets/arrow-left.svg";
 
 class App extends React.Component {
- 
   constructor(props) {
     super(props);
     this.countyLayer = this.makeCountyLayer();
@@ -25,7 +24,9 @@ class App extends React.Component {
       guess: "",
       readyToGuess: false,
       gameOverText: null,
-      gaveUp: false
+      gaveUp: false,
+      town: null, 
+      zoomLevel: 7,
       //To do: Add an array of previous movements (as object with lat and lon) for history and breadcrumbs
     };
 
@@ -38,6 +39,7 @@ class App extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.showGuessForm = this.showGuessForm.bind(this);
     this.giveUp = this.giveUp.bind(this);
+    this.setTown = this.setTown.bind(this);
   }
 
   makeCountyLayer() {
@@ -56,11 +58,29 @@ class App extends React.Component {
       this.checkStart({ lon: lon, lat: lat });
     }
     let countyArrayObj = leafletPip.pointInLayer([lon, lat], this.countyLayer);
+    this.setTown(lat, lon);
+    let upperCaseCounty = countyArrayObj[0].feature.properties.CNTYNAME;
+    let county =
+      upperCaseCounty.charAt(0) + upperCaseCounty.toLowerCase().slice(1);
     this.setState({
-      startingCounty: countyArrayObj[0].feature.properties.CNTYNAME,
-      markerPosition: { lat: lat, lon: lon }
+      startingCounty: county,
+      markerPosition: { lat: lat, lon: lon },
+      startPosition: { lat: lat, lon: lon }
     });
     return { lat: lat, lon: lon };
+  }
+
+  setTown(lat, lon) {
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse.php?format=html&lat=${lat}&lon=${lon}&zoom=12&format=json`
+    )
+      .then(request => request.json())
+      .then(json => {
+        let town = json.address.city;
+        this.setState({
+          town: town
+        });
+      });
   }
 
   checkStart(point) {
@@ -79,9 +99,11 @@ class App extends React.Component {
       gameStarted: !this.state.gameStarted,
       gameOver: false,
       readyToGuess: false,
-      gameOverText: null
+      gameOverText: null, 
+      zoomLevel: 18,
     });
     e.target.disabled = true;
+    this.countyLayer.setStyle({color: 'none'})
   };
 
   handleChange(event) {
@@ -94,8 +116,10 @@ class App extends React.Component {
       gameOver: true,
       gameStarted: false,
       gaveUp: true,
-      score: 0
+      score: 0, 
+      zoomLevel: 7,
     });
+    this.countyLayer.setStyle({color: '#3388FF'});
   }
 
   handleSubmit(event) {
@@ -104,18 +128,20 @@ class App extends React.Component {
     event.preventDefault();
     if (this.state.guess.toUpperCase() === this.state.startingCounty) {
       this.setState({
-        gameOver: true,
         gameOverText: "won",
-        gameStarted: false
       });
     } else {
       this.setState({
-        gameOver: true,
         score: 0,
         gameOverText: "lost",
-        gameStarted: false
       });
     }
+      this.setState({
+        gameOver: true,
+        gameStarted: false,
+        zoomLevel: 7
+      })
+      this.countyLayer.setStyle({color: '#3388FF'});
   }
 
   showGuessForm() {
@@ -149,9 +175,7 @@ class App extends React.Component {
   };
 
   //Currently not using but leaving in for future improvements and refactoring
-  componentDidMount() {
- 
-  }
+  componentDidMount() {}
   render() {
     //Change the game messages to be components when refactoring. Ran out of time.
     return (
@@ -159,21 +183,26 @@ class App extends React.Component {
         <Nav />
         <div className="horizontal-flex-box">
           <div className="vertical-flex-box">
-              <Map
-                markerPosition={this.state.markerPosition}
-                startPosition={this.state.startPosition}
-                pickRandomLatLon={this.pickRandomLatLon}
-                countyLayer={this.countyLayer}
-              />
-            
-              <MoveButtons
-                gameStarted={this.state.gameStarted}
-                move={this.move}
-              />
-          
+            <Map
+              markerPosition={this.state.markerPosition}
+              startPosition={this.state.startPosition}
+              pickRandomLatLon={this.pickRandomLatLon}
+              countyLayer={this.countyLayer}
+              zoomLevel={this.state.zoomLevel}
+              gameOver={this.state.gameOver}
+              gameStarted={this.state.gameStarted}
+            />
+
+            <MoveButtons
+              gameStarted={this.state.gameStarted}
+              move={this.move}
+            />
+
             <InfoBox
               markerPosition={this.state.markerPosition}
               gameOver={this.state.gameOver}
+              startingCounty={this.state.startingCounty}
+              town={this.state.town}
             />
           </div>
           <img id="county-map" src={countyMap} alt="Vermont Counties Map" />
@@ -200,18 +229,11 @@ class App extends React.Component {
         {this.state.gameOverText === "lost" && (
           <h3>
             Sorry you guessed {this.state.guess} but you were in{" "}
-            {this.state.startingCounty.charAt(0) +
-              this.state.startingCounty.toLowerCase().slice(1)}
-            .
+            {this.state.startingCounty}.
           </h3>
         )}
         {this.state.gaveUp && (
-          <h3>
-            No worries. You were in{" "}
-            {this.state.startingCounty.charAt(0) +
-              this.state.startingCounty.toLowerCase().slice(1)}
-            . Try again!
-          </h3>
+          <h3>No worries. You were in {this.state.startingCounty}. Try again!</h3>
         )}
       </div>
     );
@@ -331,20 +353,29 @@ const Nav = props => {
 const InfoBox = props => {
   if (props.gameOver) {
     return (
-      <h3>
-        Lat: {props.markerPosition.lat.toFixed(3)} Lon:{" "}
-        {props.markerPosition.lon.toFixed(3)}
-      </h3>
+      <div id="info-wrapper">
+        <h3 id="info-lat">Lat: {props.markerPosition.lat.toFixed(3)} </h3>
+        <h3 id="info-lon">Lon: {props.markerPosition.lon.toFixed(3)}</h3>
+        <h3 id="info-county">County: {props.startingCounty}</h3>
+        <h3 id="info-town">Town: {props.town}</h3>
+      </div>
     );
   } else {
-    return <h3>Lat: ??? Lon: ???</h3>;
+    return (
+      <div id="info-wrapper">
+        <h3 id="info-lat">Lat: ??? </h3>
+        <h3 id="info-lon">Lon: ???</h3>
+        <h3 id="info-county">County: ???</h3>
+        <h3 id="info-town">Town: ???</h3>
+      </div>
+    );
   }
 };
 
 const GuessForm = props => {
   if (props.readyToGuess) {
     return (
-      <form onSubmit={props.handleSubmit}>
+      /* <form onSubmit={props.handleSubmit}>
         <label>
           Which county did you start in:
           <input
@@ -355,15 +386,14 @@ const GuessForm = props => {
           />
         </label>
         <input id="submit-button" type="submit" value="Submit" />
-      </form>
+      </form> */
+      <div id="county-list">
+        <button>Chittenden</button>
+      </div>
     );
   } else {
     return null;
   }
 };
 
-
-
-  
 ReactDOM.render(<App />, document.getElementById("root"));
-

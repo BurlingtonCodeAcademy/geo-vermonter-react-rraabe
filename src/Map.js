@@ -10,16 +10,16 @@ const style = {
   display: relative,
   marginTop: "30px",
 };
-
+let startingMarker;
 class Map extends React.Component {
   componentDidMount() {
     // create map
     this.map = L.map("map", {
       //Start on Burlington Code Academy
-      center: [44.4759406, -73.2123868],
-      zoom: 18,
-      maxZoom: 18,
-      minZoom: 18,
+      center: [43.7990718,-72.6002608],
+      zoom: 7,
+      // maxZoom: 18,
+      // minZoom: 5,
       layers: [
         L.tileLayer(
           "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -39,20 +39,31 @@ class Map extends React.Component {
     this.props.countyLayer.addTo(this.map);
 
     // *************Disable these for testing****************
-    this.map.zoomControl.remove();
-    this.map.scrollWheelZoom.disable();
-    this.map.touchZoom.disable();
-    this.map.dragging.disable();
-    this.map.keyboard.disable();
+    // this.map.zoomControl.remove();
+    // this.map.scrollWheelZoom.disable();
+    // this.map.touchZoom.disable();
+    // this.map.dragging.disable();
+    // this.map.keyboard.disable();
     // *****************************************************
+
   }
 
   //the new markerPosition gets passed in and compared to the old marker position in this.props.markerPosition
-  componentDidUpdate({ markerPosition }) {
+  componentDidUpdate() {
     // check if position has changed
-    if (this.props.markerPosition !== markerPosition) {
+    this.map.setZoom(this.props.zoomLevel);
+    // if (this.props.markerPosition !== markerPosition) {
       this.map.panTo(this.props.markerPosition);
+    // }
+    if(this.props.gameOver){
+      this.startingMarker = L.marker(this.props.startPosition).addTo(this.map);
     }
+
+    if((this.startingMarker !== undefined) && this.props.gameStarted){
+      this.map.removeLayer(this.startingMarker);
+    }
+    
+    (this.props.gameStarted ? this.borderData.setStyle({color: 'none'}) : this.borderData.setStyle({color: '#3388FF'}))
   }
 
   render() {

@@ -46,3 +46,23 @@
   width: 50%;
 }
 
+#info-wrapper{
+  display: grid;
+  grid-template-areas: 
+            "lat lon"
+            "county town";
+}
+
+#info-lat{
+  grid-area: lat;
+}
+#info-lon{
+  grid-area: lon;
+}
+#info-county{
+  grid-area: county;
+}
+#info-town{
+  grid-area: town;
+ 
+}
