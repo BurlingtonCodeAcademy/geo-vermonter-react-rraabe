@@ -8,15 +8,20 @@ const style = {
   width: "600px",
   margin: "auto 0",
   display: relative,
-  marginTop: "30px",
+  marginTop: "30px"
 };
 let startingMarker;
+var latlngs = [
+  [43.7990718, -72.6002608],
+  [44.7990718, -73.6002608],
+  [45.7990718, -74.6002608]
+];
 class Map extends React.Component {
   componentDidMount() {
     // create map
     this.map = L.map("map", {
       //Start on Burlington Code Academy
-      center: [43.7990718,-72.6002608],
+      center: [43.7990718, -72.6002608],
       zoom: 7,
       // maxZoom: 18,
       // minZoom: 5,
@@ -31,7 +36,7 @@ class Map extends React.Component {
       ]
     });
 
-    //Only using the VT border as a visual aid for the user
+    //Only using the VT border as a visual aid for the user.
     this.borderData = L.geoJSON(borderData, { fillColor: "none" });
     this.borderData.addTo(this.map);
 
@@ -39,31 +44,44 @@ class Map extends React.Component {
     this.props.countyLayer.addTo(this.map);
 
     // *************Disable these for testing****************
-    // this.map.zoomControl.remove();
-    // this.map.scrollWheelZoom.disable();
-    // this.map.touchZoom.disable();
-    // this.map.dragging.disable();
-    // this.map.keyboard.disable();
+    this.map.zoomControl.remove();
+    this.map.scrollWheelZoom.disable();
+    this.map.touchZoom.disable();
+    this.map.dragging.disable();
+    this.map.keyboard.disable();
     // *****************************************************
-
   }
 
   //the new markerPosition gets passed in and compared to the old marker position in this.props.markerPosition
   componentDidUpdate() {
-    // check if position has changed
     this.map.setZoom(this.props.zoomLevel);
-    // if (this.props.markerPosition !== markerPosition) {
-      this.map.panTo(this.props.markerPosition);
-    // }
-    if(this.props.gameOver){
+    this.map.panTo(this.props.markerPosition);
+
+    //adds the marker to the starting position when the game ends
+    if (this.props.gameOver) {
       this.startingMarker = L.marker(this.props.startPosition).addTo(this.map);
     }
 
-    if((this.startingMarker !== undefined) && this.props.gameStarted){
+    //Makes the breadcrumb line
+    let breadcrumbs = L.polyline(this.props.allMoves, {
+      color: "white",
+      dashArray: 8,
+      opacity: 0.5
+    }).addTo(this.map);
+
+    //removes the marker between games
+    if (this.startingMarker !== undefined && this.props.gameStarted) {
       this.map.removeLayer(this.startingMarker);
     }
-    
-    (this.props.gameStarted ? this.borderData.setStyle({color: 'none'}) : this.borderData.setStyle({color: '#3388FF'}))
+
+    if (this.props.gameStarted) {
+      //find a state to remove the polyline
+      // this.map.removeLayer(breadcrumbs);
+    }
+
+    this.props.gameStarted
+      ? this.borderData.setStyle({ color: "none" })
+      : this.borderData.setStyle({ color: "#3388FF" });
   }
 
   render() {

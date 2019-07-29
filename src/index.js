@@ -1,3 +1,5 @@
+//To do: add a home button that has an onClick function that pans to startPosition
+
 import React from "react";
 import ReactDOM from "react-dom";
 import Map from "./Map.js";
@@ -17,17 +19,18 @@ class App extends React.Component {
     this.state = {
       startPosition: { lat: 0, lon: 0 },
       markerPosition: { lat: 0, lon: 0 },
+      allMoves: [],
       score: 100,
       gameStarted: false,
       startingCounty: null,
       gameOver: false,
       guess: "",
+      lastGuess: "",
       readyToGuess: false,
       gameOverText: null,
       gaveUp: false,
-      town: null, 
-      zoomLevel: 7,
-      //To do: Add an array of previous movements (as object with lat and lon) for history and breadcrumbs
+      town: null,
+      zoomLevel: 7
     };
 
     this.pickRandomLatLon = this.pickRandomLatLon.bind(this);
@@ -40,6 +43,7 @@ class App extends React.Component {
     this.showGuessForm = this.showGuessForm.bind(this);
     this.giveUp = this.giveUp.bind(this);
     this.setTown = this.setTown.bind(this);
+    this.handleGuess = this.handleGuess.bind(this);
   }
 
   makeCountyLayer() {
@@ -65,6 +69,7 @@ class App extends React.Component {
     this.setState({
       startingCounty: county,
       markerPosition: { lat: lat, lon: lon },
+      allMoves: [[lat, lon]],
       startPosition: { lat: lat, lon: lon }
     });
     return { lat: lat, lon: lon };
@@ -94,16 +99,19 @@ class App extends React.Component {
   }
 
   startGame = e => {
+    this.setState({
+      allMoves: []
+    });
     this.pickRandomLatLon();
     this.setState({
       gameStarted: !this.state.gameStarted,
       gameOver: false,
       readyToGuess: false,
-      gameOverText: null, 
-      zoomLevel: 18,
+      gameOverText: null,
+      zoomLevel: 18
     });
     e.target.disabled = true;
-    this.countyLayer.setStyle({color: 'none'})
+    this.countyLayer.setStyle({ color: "none" });
   };
 
   handleChange(event) {
@@ -111,42 +119,55 @@ class App extends React.Component {
       guess: event.target.value
     });
   }
+  handleGuess(event) {
+    this.setState({
+      guess: event.target.textContent
+    });
+  }
   giveUp() {
     this.setState({
       gameOver: true,
       gameStarted: false,
       gaveUp: true,
-      score: 0, 
-      zoomLevel: 7,
+      score: 0,
+      zoomLevel: 7
     });
-    this.countyLayer.setStyle({color: '#3388FF'});
+    this.countyLayer.setStyle({ color: "#3388FF" });
   }
 
   handleSubmit(event) {
-    document.getElementById("submit-button").disabled = true;
-    document.getElementById("guess-field").disabled = true;
+    // document.getElementById("submit-button").disabled = true;
+    // document.getElementById("guess-field").disabled = true;
     event.preventDefault();
-    if (this.state.guess.toUpperCase() === this.state.startingCounty) {
-      this.setState({
-        gameOverText: "won",
-      });
-    } else {
-      this.setState({
-        score: 0,
-        gameOverText: "lost",
-      });
-    }
+    if (this.state.guess.toUpperCase() === this.state.startingCounty.toUpperCase()) {
       this.setState({
         gameOver: true,
-        gameStarted: false,
-        zoomLevel: 7
-      })
-      this.countyLayer.setStyle({color: '#3388FF'});
+        gameOverText: "won",
+        zoomLevel: 7,
+        lastGuess: this.state.guess,
+        gameStarted: false
+      });
+      this.countyLayer.setStyle({ color: "#3388FF" });
+      document.getElementById("submit-guess").disabled = true;
+      document.getElementById("cancel").disabled = true;
+    } else {
+      this.setState({
+        score: this.state.score - 10,
+        gameOverText: "tryAgain",
+        lastGuess: this.state.guess
+      });
+      document.getElementById(this.state.guess).disabled = true;
+      let strikeText = document
+        .getElementById(this.state.guess)
+        .innerHTML.strike();
+      document.getElementById(this.state.guess).innerHTML = strikeText;
+    }
   }
 
   showGuessForm() {
     this.setState({
-      readyToGuess: true
+      readyToGuess: !this.state.readyToGuess,
+      guess: ""
     });
   }
 
@@ -165,12 +186,15 @@ class App extends React.Component {
       //Treating this a pseudo-catch
       alert(`Error: ${direction} was given to the move function`);
     }
+    let movePlaceholder = this.state.allMoves;
+    movePlaceholder.push([lat, lon]);
     this.setState({
       markerPosition: {
         lat: lat,
         lon: lon
       },
-      score: this.state.score - 1
+      score: this.state.score - 1,
+      allMoves: movePlaceholder
     });
   };
 
@@ -191,6 +215,7 @@ class App extends React.Component {
               zoomLevel={this.state.zoomLevel}
               gameOver={this.state.gameOver}
               gameStarted={this.state.gameStarted}
+              allMoves={this.state.allMoves}
             />
 
             <MoveButtons
@@ -203,6 +228,7 @@ class App extends React.Component {
               gameOver={this.state.gameOver}
               startingCounty={this.state.startingCounty}
               town={this.state.town}
+              guess={this.state.guess}
             />
           </div>
           <img id="county-map" src={countyMap} alt="Vermont Counties Map" />
@@ -218,6 +244,13 @@ class App extends React.Component {
           guess={this.state.guess}
           handleSubmit={this.handleSubmit}
           handleChange={this.handleChange}
+          handleGuess={this.handleGuess}
+          showGuessForm={this.showGuessForm}
+        />
+        <HighScoreForm
+          score={this.state.score}
+          startingCounty={this.state.startingCounty}
+          gameOver={this.state.gameOver}
         />
 
         {this.state.gameOver && (
@@ -226,14 +259,14 @@ class App extends React.Component {
           </div>
         )}
         {this.state.gameOverText === "won" && <h3>You guessed correctly!</h3>}
-        {this.state.gameOverText === "lost" && (
-          <h3>
-            Sorry you guessed {this.state.guess} but you were in{" "}
-            {this.state.startingCounty}.
-          </h3>
+        {this.state.gameOverText === "tryAgain" && (
+          <h3>Sorry you are not in {this.state.lastGuess}. Guess again.</h3>
         )}
         {this.state.gaveUp && (
-          <h3>No worries. You were in {this.state.startingCounty}. Try again!</h3>
+          <h3>
+            You were in {this.state.startingCounty}. Click "Start" to play
+            again.
+          </h3>
         )}
       </div>
     );
@@ -347,7 +380,12 @@ const GameButtons = props => {
 
 //Add to the NavBar
 const Nav = props => {
-  return <div id="navbar">Geo-Vermonter</div>;
+  return (
+    <div id="navbar">
+      <h3>Geo-Vermonter</h3>
+      <a href="/scores.html">High Scores</a>
+    </div>
+  );
 };
 
 const InfoBox = props => {
@@ -387,13 +425,81 @@ const GuessForm = props => {
         </label>
         <input id="submit-button" type="submit" value="Submit" />
       </form> */
-      <div id="county-list">
-        <button>Chittenden</button>
+      <div id="county-guess-box">
+        <div id="county-button-wrapper">
+          <button id="Addison" onClick={props.handleGuess}>
+            Addison
+          </button>
+          <button id="Bennington" onClick={props.handleGuess}>
+            Bennington
+          </button>
+          <button id="Caledonia" onClick={props.handleGuess}>
+            Caledonia
+          </button>
+          <button id="Chittenden" onClick={props.handleGuess}>
+            Chittenden
+          </button>
+          <button id="Essex" onClick={props.handleGuess}>
+            Essex
+          </button>
+          <button id="Franklin" onClick={props.handleGuess}>
+            Franklin
+          </button>
+          <button id="Grand Isle" onClick={props.handleGuess}>
+            Grand Isle
+          </button>
+          <button id="Lamoille" onClick={props.handleGuess}>
+            Lamoille
+          </button>
+          <button id="Orange" onClick={props.handleGuess}>
+            Orange
+          </button>
+          <button id="Orleans" onClick={props.handleGuess}>
+            Orleans
+          </button>
+          <button id="Rutland" onClick={props.handleGuess}>
+            Rutland
+          </button>
+          <button id="Washington" onClick={props.handleGuess}>
+            Washington
+          </button>
+          <button id="Windham" onClick={props.handleGuess}>
+            Windham
+          </button>
+          <button id="Windsor" onClick={props.handleGuess}>
+            Windsor
+          </button>
+        </div>
+        <h4>Your current guess: {props.guess}</h4>
+        <button id="submit-guess" onClick={props.handleSubmit}>
+          Submit Guess
+        </button>
+        <button id="cancel" onClick={props.showGuessForm}>
+          Cancel
+        </button>
       </div>
     );
   } else {
     return null;
   }
 };
-
+const HighScoreForm = props => {
+  if (props.gameOver) {
+    return (
+      <form method="POST" action="/scores">
+        <label htmlFor="user">Enter your name: </label>
+        <input type="text" name="user" />
+        <br />
+        <label htmlFor="score">Your final score:</label>
+        <input name="score" value={props.score} readOnly/>
+        <br />
+        <label htmlFor="county">Your final score:</label>
+        <input name="county" value={props.startingCounty} readOnly/>
+        <input type="submit" />
+      </form>
+    );
+  } else {
+    return null;
+  }
+};
 ReactDOM.render(<App />, document.getElementById("root"));
