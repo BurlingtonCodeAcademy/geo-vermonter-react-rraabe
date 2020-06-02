@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <title>High Scores</title>
+</head>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <h2>Scores:</h2>
+  <div id="scores">
+    <ul>
+
+    </ul>
+  </div>
+  <script>
+    fetch('./server/scores.json')
+      .then((response) => response.json())
+      .then(fillScores)
+
+    function fillScores(scores){
+      console.log(scores);
+      let list = document.querySelector('#scores > ul');
+      console.log(list)
+      let place = 1;
+      //May need to sort the array here
+      scores.sort((a,b) => (b.score - a.score));
+      for (let score of scores) {
+        const item = document.createElement('li');
+        let content = `${place}. ${score.user} ${score.score}pts ${score.startingCounty} ${score.date}`;
+        item.innerHTML = content;
+        place++;
+        list.appendChild(item);
+      }
+    }
+  </script>
+</body>
+</html>

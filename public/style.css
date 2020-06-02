@@ -1,0 +1,91 @@
+#navbar {
+  width: 100%;
+  font-size: 2vh;
+  text-align: center;
+}
+
+.vertical-flex-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.horizontal-flex-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.nav-button {
+  background: none;
+  border: none;
+}
+
+#button-wrapper {
+  display: grid;
+  grid-template-areas:
+    ". north ."
+    "west . east"
+    ". south .";
+}
+
+#north-button {
+  grid-area: north;
+  width: 50%;
+}
+#south-button {
+  grid-area: south;
+  width: 50%;
+}
+#east-button {
+  grid-area: east;
+  width: 50%;
+}
+#west-button {
+  grid-area: west;
+  width: 50%;
+}
+
+#info-wrapper {
+  display: grid;
+  grid-template-areas:
+    "lat lon"
+    "county town";
+}
+
+#info-lat {
+  grid-area: lat;
+}
+#info-lon {
+  grid-area: lon;
+}
+#info-county {
+  grid-area: county;
+}
+#info-town {
+  grid-area: town;
+}
+
+#county-button-wrapper > button {
+  background: none;
+  border: 1px solid black;
+  border-right: none;
+  padding: 15px;
+  width: fixed;
+}
+
+#county-button-wrapper > :last-child {
+  border: 1px solid black;
+}
+
+#county-button-wrapper > button:hover {
+  color: darkgreen;
+  text-shadow: 1px 0px 0px darkgreen;
+}
+
+#county-map {
+  height: 600px;
+}
+
+h1 {
+  margin: 0;
+}
